@@ -169,3 +169,6 @@ Binary     1.0.0.1    PackageManagement                   {Find-Package, Get-Pac
 
 ![Screenshot](resources/screenshot11.png)
 
+20. Once completed it will create an HTML repot
+
+![Screenshot](resources/screenshot12.png)
