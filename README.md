@@ -1,235 +1,163 @@
 ![alt text](rh_small_logo.jpg)
-* This repository contains instructions for using vCheck at Railhead. For any additional details or inquiries, please contact us at christopher.sargent@sargentwalker.io.
+* This repository contains detailed instructions for deploying AWX via docker-compose. For any additional details or inquiries, please contact us at christopher.sargent@sargentwalker.io.
+* [AWX Project Page](https://github.com/ansible/awx)
+* Note AWX is the opensourced Ansible Automation Platform
+* [Ansible Automation Plaform](https://www.redhat.com/en/technologies/management/ansible)
 
-* Original vCheck Page](https://github.com/alanrenouf/vCheck-vSphere)
+# Railhead vCheck
+* Running from my Desktop with WSL, Powershell and Powershell ISE
+1. cd /mnt/c/Users/CAS/Desktop/Railhead2024/projects/
+2. git clone git@github.com:ChristopherSargent/railhead_vCheck.git
+3. cd railhead_vCheck
+4. vim GlobalVariables.ps1
+```
+# You can change the following defaults by altering the below settings:
 
-# AWX Prerequisites
-* Deploy VM in rdu1-vcenter.mgmt.adtihosting.com
-* [Ubuntu 20.04 STIG Hardened FIPS Enabled](https://docs.google.com/document/d/1nEIavbELGl8xjHjZX4p22q5m32HCLkLH/edit#heading=h.gjdgxs)
-1. ssh onrails@184.94.220.211
-2. sudo -i
-3. ip link set ens192 down
-4. apt update && apt upgrade -y
-5. apt -y install ansible apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-6. curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-7. add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-8. apt update && apt install docker-ce docker-ce-cli containerd.io -y && apt remove docker docker.io containerd runc
-9. curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-10. chmod +x /usr/local/bin/docker-compose
-11. docker version && docker-compose version
-```
-Client: Docker Engine - Community
- Version:           24.0.7
- API version:       1.43
- Go version:        go1.20.10
- Git commit:        afdd53b
- Built:             Thu Oct 26 09:08:01 2023
- OS/Arch:           linux/amd64
- Context:           default
+# Set the following to true to enable the setup wizard for first time run
+$SetupWizard = $true
 
-Server: Docker Engine - Community
- Engine:
-  Version:          24.0.7
-  API version:      1.43 (minimum version 1.12)
-  Go version:       go1.20.10
-  Git commit:       311b9ff
-  Built:            Thu Oct 26 09:08:01 2023
-  OS/Arch:          linux/amd64
-  Experimental:     false
- containerd:
-  Version:          1.6.26
-  GitCommit:        3dd1e886e55dd695541fdcd67420c2888645a495
- runc:
-  Version:          1.1.10
-  GitCommit:        v1.1.10-0-g18a0cb0
- docker-init:
-  Version:          0.19.0
-  GitCommit:        de40ad0
-docker-compose version 1.29.2, build 5becea4c
-docker-py version: 5.0.0
-CPython version: 3.7.10
-OpenSSL version: OpenSSL 1.1.0l  10 Sep 2019
-```
-12. systemctl enable docker.service && systemctl start docker.service
+# Start of Settings
+# Report header
+$reportHeader = "vCheck"
+# Would you like the report displayed in the local browser once completed ?
+$DisplaytoScreen = $true
+# Display the report even if it is empty?
+$DisplayReportEvenIfEmpty = $true
+# Use the following item to define if an email report should be sent once completed
+$SendEmail = $True
+# Please Specify the SMTP server address (and optional port) [servername(:port)]
+$SMTPSRV = "184.94.220.216"
+# Would you like to use SSL to send email?
+$EmailSSL = $false
+# Please specify the email address who will send the vCheck report
+$EmailFrom = "christopher.sargent@railhead.io"
+# Please specify the email address(es) who will receive the vCheck report (separate multiple addresses with comma)
+$EmailTo = "christopher.sargent@railhead.io"
+# Please specify the email address(es) who will be CCd to receive the vCheck report (separate multiple addresses with comma)
+$EmailCc = "christopher.sargent@railhead.io"
+# Please specify an email subject
+$EmailSubject = "$ Railhead vCheck Report"
+# Send the report by e-mail even if it is empty?
+$EmailReportEvenIfEmpty = $true
+# If you would prefer the HTML file as an attachment then enable the following:
+$SendAttachment = $True
+# Set the style template to use.
+$Style = "Clarity"
+# Do you want to include plugin details in the report?
+$reportOnPlugins = $true
+# List Enabled plugins first in Plugin Report?
+$ListEnabledPluginsFirst = $true
+# Set the following setting to $true to see how long each Plugin takes to run as part of the report
+$TimeToRun = $true
+# Report on plugins that take longer than the following amount of seconds
+$PluginSeconds = 30
+# End of Settings
 
-# Install AWX
-* Git clone AWX 23.5.1 , configure project, build images and deploy AWX containers
-1. ssh onrails@184.94.220.211
-2. sudo -i
-3. cd /home && git clone -b 23.5.1 https://github.com/ansible/awx.git
-4. cd /home && mv awx awx23 && cd /home/awx23/tools/docker-compose
-5. vim inventory
-```
-localhost ansible_connection=local ansible_python_interpreter="/usr/bin/env python3"
+# End of Global Variables
 
-[all:vars]
+```
+5. vim Encrypted_Creds.ps1
+```
+#STORED CREDENTIAL CODE
+$Domain = Read-Host "Enter Domain Name"
+$AdminName = Read-Host "Enter your UserName"
+$CredsFile = "C:\Users\cas\Desktop\Railhead2024\projects\railhead_vCheck\Password\$AdminName-PowershellCreds.txt"
+$FileExists = Test-Path $CredsFile
+if ($Domain -eq "") {
+$Username = $AdminName
+}
+else {
+$Username = $Domain+"\"+$AdminName
+}
+if  ($FileExists -eq $false) {
+    Write-Host 'Credential file not found. Enter your password:' -ForegroundColor Red
+    Read-Host -AsSecureString | ConvertFrom-SecureString | Out-File $CredsFile
+    $password = get-content $CredsFile | convertto-securestring
+    $Cred = new-object -typename System.Management.Automation.PSCredential -argumentlist $Username,$password}
+else
+    {Write-Host 'Using your stored credential file' -ForegroundColor Green
+	Read-Host "Enter your new password" -AsSecureString | ConvertFrom-SecureString | Out-File $CredsFile
+    $password = get-content $CredsFile | convertto-securestring
+    $Cred = new-object -typename System.Management.Automation.PSCredential -argumentlist $Username,$password}
+```
+6. vim Plugins/'00 Initialize'/'00 Connection Plugin for vCenter.ps1'
+* Update the following
+```
+$fldr2 = "C:\Users\cas\Desktop\Railhead2024\\projects\railhead_vCheck\Password\"
+$Server = "rdu1-vcenter.mgmt.adtihosting.com"
 
-# AWX-Managed Database Settings
-# If left blank, these will be generated upon install.
-# Values are written out to tools/docker-compose/_sources/secrets/
-pg_password="addpassword"
-broadcast_websocket_secret="addpassword"
-secret_key="addkey"
+$VC_User = "rhcs@mgmt.adtihosting.com"
+```
+# Install powerCLI
+1. Open administrator powershell window
+2. Get-Module VMware.PowerCLI -ListAvailable | Uninstall-Module -Force
+3. Find-Module powershellget | Install-Module
+* Select Y
+4. Install-Module -Name PowerShellGet -Force
+5. Get-Module powershellget -ListAvailable
+```
+    Directory: C:\Program Files\WindowsPowerShell\Modules
 
-# External Database Settings
-# pg_host=""
-# pg_password=""
-# pg_username=""
-# pg_hostname=""
 
-awx_image="ghcr.io/ansible/awx_devel"
-# migrate_local_docker=false
+ModuleType Version    Name                                ExportedCommands
+---------- -------    ----                                ----------------
+Script     2.2.5      PowerShellGet                       {Find-Command, Find-DSCResource, Find-Module, Find-RoleCap...
+Script     1.0.0.1    PowerShellGet                       {Install-Module, Find-Module, Save-Module, Update-Module...}
 ```
-* Note the following take a few minutes each
-6. cd /home/awx23
-7. make docker-compose-build
-8. docker image ls
-```
-REPOSITORY                  TAG       IMAGE ID       CREATED          SIZE
-ghcr.io/ansible/awx_devel   HEAD      8f12c183549f   49 seconds ago   2.05GB
-quay.io/ansible/awx-ee      latest    2dfb71399e33   15 months ago    1.85GB
-guacamole/guacd             latest    4ead91078479   15 months ago    271MB
-guacamole/guacamole         latest    1986410fc9e8   15 months ago    432MB
-nginx                       latest    2d389e545974   15 months ago    142MB
-<none>                      <none>    9b7bff0a9ee9   16 months ago    1.8GB
-quay.io/ansible/receptor    devel     981db0fc0f90   16 months ago    233MB
-postgres                    12        f2f1f275f1a1   16 months ago    373MB
-redis                       latest    dc7b40a0b05d   16 months ago    117MB
-postgres                    13.4      113197da0347   2 years ago      371MB
-```
-9. cd /home/awx23 && make docker-compose COMPOSE_UP_OPTS=-d
-10. docker exec tools_awx_1 make clean-ui ui-devel
-11. docker exec -ti tools_awx_1 awx-manage createsuperuser
-* Note. Save password.
-```
-Username: christopher.sargent
-Email address: christopher.sargent@railhead.io
-Password:
-Password (again):
-Superuser created successfully.
-```
-12. cp /root/.bashrc /root/.bashrc.ORIG
-13. vi /root/.bashrc (add the following aliases)
-```
-alias awx21-start='cd /home/awx21/awx/tools/docker-compose/_sources/ && docker-compose up -d'
-alias awx21-stop='cd /home/awx21/awx/tools/docker-compose/_sources/ && docker-compose down'
-alias awx23-start='cd /home/awx23/tools/docker-compose/_sources && docker-compose up -d'
-alias awx23-stop='cd /home/awx23/tools/docker-compose/_sources && docker-compose down'
-alias awx='cd /var/lib/awx/projects/'
-```
-14. source /root/.bashrc
-15. awx23-stop
-```
-Stopping tools_awx_1      ... done
-Stopping tools_redis_1    ... done
-Stopping tools_postgres_1 ... done
-Removing tools_awx_1      ... done
-Removing tools_redis_1    ... done
-Removing tools_postgres_1 ... done
-Removing network _sources_default
-```
-16. cp /home/awx23/tools/docker-compose/_sources/docker-compose.yml /home/awx23/tools/docker-compose/_sources/docker-compose.yml.ORIG
+6. File explorer C:\Program Files\WindowsPowerShell\Modules\PowerShellGet
 
-17. vim /home/awx23/tools/docker-compose/_sources/docker-compose.yml
-* Note we are adding the bind mount - "/var/lib/awx/projects:/var/lib/awx/projects:rw", setting restart: always so the containers come back up on reboot and updating the ports from 8043:8043 to 443:8043
-```
----
-version: '2.1'
-services:
-  # Primary AWX Development Container
-  awx_1:
-    user: "0"
-    image: "ghcr.io/ansible/awx_devel:HEAD"
-    container_name: tools_awx_1
-    hostname: awx_1
-    command: launch_awx.sh
-    environment:
-      OS: " Operating System: Ubuntu 20.04.6 LTS"
-      SDB_HOST: 0.0.0.0
-      SDB_PORT: 7899
-      AWX_GROUP_QUEUES: tower
-      MAIN_NODE_TYPE: "${MAIN_NODE_TYPE:-hybrid}"
-      RECEPTORCTL_SOCKET: /var/run/awx-receptor/receptor.sock
-      CONTROL_PLANE_NODE_COUNT: 1
-      EXECUTION_NODE_COUNT: 0
-      AWX_LOGGING_MODE: stdout
-      DJANGO_SUPERUSER_PASSWORD: IjSoBxodEzhvIpOjeXIB
-      UWSGI_MOUNT_PATH: /
-      RUN_MIGRATIONS: 1
-    links:
-      - postgres
-      - redis_1
-    working_dir: "/awx_devel"
-    volumes:
-      - "../../../:/awx_devel"
-      - "../../docker-compose/supervisor.conf:/etc/supervisord.conf"
-      - "../../docker-compose/_sources/database.py:/etc/tower/conf.d/database.py"
-      - "../../docker-compose/_sources/websocket_secret.py:/etc/tower/conf.d/websocket_secret.py"
-      - "../../docker-compose/_sources/local_settings.py:/etc/tower/conf.d/local_settings.py"
-      - "../../docker-compose/_sources/nginx.conf:/etc/nginx/nginx.conf"
-      - "../../docker-compose/_sources/nginx.locations.conf:/etc/nginx/conf.d/nginx.locations.conf"
-      - "../../docker-compose/_sources/SECRET_KEY:/etc/tower/SECRET_KEY"
-      - "../../docker-compose/_sources/receptor/receptor-awx-1.conf:/etc/receptor/receptor.conf"
-      - "../../docker-compose/_sources/receptor/receptor-awx-1.conf.lock:/etc/receptor/receptor.conf.lock"
-      # - "../../docker-compose/_sources/certs:/etc/receptor/certs"  # TODO: optionally generate certs
-      - "/sys/fs/cgroup:/sys/fs/cgroup"
-      - "~/.kube/config:/var/lib/awx/.kube/config"
-      - "./tools_redis_socket_1:/var/run/redis/:rw"
-      - "/var/lib/awx/projects:/var/lib/awx/projects:rw"
-    privileged: true
-    tty: true
-    ports:
-      - "7899-7999:7899-7999"  # sdb-listen
-      - "6899:6899"
-      - "8080:8080"  # unused but mapped for debugging
-      - "8888:8888"  # jupyter notebook
-      - "8013:8013"  # http
-      - "443:8043"  # https
-      - "2222:2222"  # receptor foo node
-      - "3000:3001"  # used by the UI dev env
-  redis_1:
-    image: redis:latest
-    container_name: tools_redis_1
-    volumes:
-      - "../../redis/redis.conf:/usr/local/etc/redis/redis.conf:Z"
-      - "./tools_redis_socket_1:/var/run/redis/:rw"
-    entrypoint: ["redis-server"]
-    command: ["/usr/local/etc/redis/redis.conf"]
-  # A useful container that simply passes through log messages to the console
-  # helpful for testing awx/tower logging
-  # logstash:
-  #   build:
-  #     context: ./docker-compose
-  #     dockerfile: Dockerfile-logstash
-  postgres:
-    image: postgres:12
-    container_name: tools_postgres_1
-    # additional logging settings for postgres can be found https://www.postgresql.org/docs/current/runtime-config-logging.html
-    command: postgres -c log_destination=stderr -c log_min_messages=info -c log_min_duration_statement=1000 -c max_connections=1024
-    environment:
-      POSTGRES_HOST_AUTH_METHOD: trust
-      POSTGRES_USER: awx
-      POSTGRES_DB: awx
-      POSTGRES_PASSWORD: Butt3rT@Nk2#@!
-    volumes:
-      - "./awx_db:/var/lib/postgresql/data"
+![Screenshot](resources/screenshot1.png)
 
-#volumes:
-#  awx_db:
-#    name: tools_awx_db
-#  redis_socket_1:
-#    name: tools_redis_socket_1
-```
-18. awx23-start
-```
-Creating network "_sources_default" with the default driver
-Creating tools_redis_1    ... done
-Creating tools_postgres_1 ... done
-Creating tools_awx_1      ... done
-```
-19. https://rdu-awx01/ > Login to AWX
+![Screenshot](resources/screenshot2.png)
 
-![Screenshot](resources/awxlogin.JPG)
+7. Get-Module packagemanagement -ListAvailable
+```
+    Directory: C:\Program Files\WindowsPowerShell\Modules
 
-* See AWX configuration details under awx_config/README.md
+
+ModuleType Version    Name                                ExportedCommands
+---------- -------    ----                                ----------------
+Script     1.4.8.1    PackageManagement                   {Find-Package, Get-Package, Get-PackageProvider, Get-Packa...
+Binary     1.0.0.1    PackageManagement                   {Find-Package, Get-Package, Get-PackageProvider, Get-Packa...
+```
+
+![Screenshot](resources/screenshot3.png)
+
+8. Close powershell window and then delete old version
+9. Open powershell ISE as admin 
+10. Set-ExecutionPolicy RemoteSigned 
+11. Import-Module PowerShellGet
+12. Install-Module -Name VMware.PowerCLI 
+13. New-Item -Path $Profile -ItemType file -Force
+* To ensure that powercli starts when you open ISE
+14. notepad $profile
+15. Import-Module VMware.PowerCLI
+* Save 
+
+![Screenshot](resources/screenshot4.png)
+
+16. Set-PowerCLIConfiguration -Scope AllUsers -ParticipateInCeip $false -InvalidCertificateAction Ignore
+* Select Yes to All
+
+![Screenshot](resources/screenshot5.png)
+
+![Screenshot](resources/screenshot6.png)
+
+17. Close and reopen powersheel ISE as Admin 
+* Note it should start powerCLI now
+
+![Screenshot](resources/screenshot7.png)
+
+18. Browse to C:\Users\CAS\Desktop\Railhead2024\projects\railhead_vCheck\Encrypted_Creds.ps1 > Play 
+* Note to just hit enter for domain name but add your user under UserName = rhcs@mgmt.adtihosting.com which prompts you for your password
+
+![Screenshot](resources/screenshot8.png)
+
+![Screenshot](resources/screenshot9.png)
+
+19. Browse to C:\Users\CAS\Desktop\Railhead2024\projects\railhead_vCheck\vCheck.ps1 > Play
+
+![Screenshot](resources/screenshot10.png)
+
+![Screenshot](resources/screenshot11.png)
 
