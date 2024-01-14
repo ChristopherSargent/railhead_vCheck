@@ -1,6 +1,6 @@
 ![alt text](rh_small_logo.jpg)
 * This repository contains instructions for running Railhead vCheck. For any additional details or inquiries, please contact us at christopher.sargent@sargentwalker.io.
-* [Original vChecke](https://github.com/alanrenouf/vCheck-vSphere)
+* [Original vCheck](https://github.com/alanrenouf/vCheck-vSphere)
 
 # About
 
