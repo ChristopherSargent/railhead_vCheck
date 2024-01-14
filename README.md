@@ -1,8 +1,7 @@
 ![alt text](rh_small_logo.jpg)
-* This repository contains detailed instructions for deploying AWX via docker-compose. For any additional details or inquiries, please contact us at christopher.sargent@sargentwalker.io.
-* [AWX Project Page](https://github.com/ansible/awx)
-* Note AWX is the opensourced Ansible Automation Platform
-* [Ansible Automation Plaform](https://www.redhat.com/en/technologies/management/ansible)
+* This repository contains instructions for using vCheck at Railhead. For any additional details or inquiries, please contact us at christopher.sargent@sargentwalker.io.
+
+* Original vCheck Page](https://github.com/alanrenouf/vCheck-vSphere)
 
 # AWX Prerequisites
 * Deploy VM in rdu1-vcenter.mgmt.adtihosting.com

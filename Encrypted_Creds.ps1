@@ -1,7 +1,7 @@
 #STORED CREDENTIAL CODE
 $Domain = Read-Host "Enter Domain Name"
 $AdminName = Read-Host "Enter your UserName"
-$CredsFile = "C:\Users\chrisas\Documents\nsu-vcheck\Password\$AdminName-PowershellCreds.txt"
+$CredsFile = "C:\Users\cas\Desktop\Railhead2024\projects\railhead_vCheck\Password\$AdminName-PowershellCreds.txt"
 $FileExists = Test-Path $CredsFile
 if ($Domain -eq "") {
 $Username = $AdminName

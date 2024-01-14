@@ -7,18 +7,18 @@ $Display = "None"
 $PluginCategory = "vSphere"
 
 # Start of Settings
-$fldr2 = "C:\Users\chrisas\Documents\nsu-vcheck\Password\"
-$Server = "snsuvim05.nsu.edu"
+$fldr2 = "C:\Users\cas\Desktop\Railhead2024\projects\railhead_vCheck\Password\"
+$Server = "rdu1-vcenter.mgmt.adtihosting.com"
 #=========================================================================================================
-#  Get credentials for vsphere access:
+#ï¿½ Get credentials for vsphere access:
 #=========================================================================================================
-$VC_User = "casargent@nsu.edu"
+$VC_User = "rhcs@mgmt.adtihosting.com"
 $encrypted = Get-Content "$fldr2$VC_User-PowershellCreds.txt" | ConvertTo-SecureString
 #$User = "NSU\"+$VC_User
 $User = $VC_User
 $SA_Credential = New-Object System.Management.Automation.PsCredential ($User, $encrypted)
 #=========================================================================================================
-#  Connect to vCenter server:
+#ï¿½ Connect to vCenter server:
 #=========================================================================================================
 $viconnect = Connect-VIServer $Server -Credential $SA_Credential
 # End of Settings
